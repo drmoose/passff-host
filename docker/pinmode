@@ -1,0 +1,23 @@
+#!/bin/bash
+pin=test
+mode="$1"
+if [ f"$mode" = f"wrong" ]; then
+  pin=wrong
+  mode=loopback
+fi
+shift
+case "$(gpg --version | head -n1 | awk '{print$3}')" in
+  2.0.*)
+    # No pinentry-mode flag support
+    case "$mode" in
+      loopback) opts="--passphrase $pin" ;;
+      error) opts='--passphrase-fd 99' ;;
+      cancel) opts='--passphrase-file /dev/null' ;;
+    esac
+    ;;
+  *)
+    opts="--passphrase $pin --pinentry-mode=$mode"
+    ;;
+esac
+export PASSWORD_STORE_GPG_OPTS="$PASSWORD_STORE_GPG_OPTS --batch $opts"
+exec "$@" || exit "$?"
